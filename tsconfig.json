@@ -18,10 +18,12 @@
     "importHelpers": true,
     "target": "es2020",
     "module": "es2020",
-    "lib": [
-      "es2020",
-      "dom"
-    ]
+    "strictPropertyInitialization": false,
+    "paths": {
+      "@smart/*": ["src/app/*"],
+      "@env/*": ["src/environments/*"]
+    },
+    "lib": ["es2020", "dom"]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

@@ -1,0 +1,63 @@
+@import "../../../../../assets/styles/sass/styles.scss";
+
+.apartment-list-item-container {
+  
+  h4,
+  h6 {
+    color: $text-white;
+  }
+
+  .city {
+    font-size: 10px;
+    margin-top: -10px;
+  }
+
+  .company-info {
+    height: 40px;
+    background-color: $primary-color;
+
+    .arrow-back {
+      font-size: 14px;
+      margin-right: 5px;
+    }
+  }
+
+  .photo-container {
+    margin: 5px 5px 5px 0;
+    position: relative;
+
+    :first-child {
+      margin-left: 5px;
+    }
+
+    .photo-item {
+      object-fit: cover;
+      height: 110px;
+      width: 100%;
+
+      &-text {
+        position: absolute;
+        bottom: 5px;
+        left: 5px;
+        color: $text-white;
+        text-align: center;
+        line-height: 30px;
+        width: 100%;
+        background-image: linear-gradient(
+          rgba(0, 0, 0, 0.53),
+          rgba(0, 0, 0, 0.2)
+        );
+        font-size: 13px;
+      }
+    }
+  }
+
+  .favButton {
+    background: transparent;
+    color: $text-white;
+  }
+
+  .active {
+    color: $yellow-color;
+  }
+}

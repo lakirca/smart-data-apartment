@@ -1,0 +1,123 @@
+@import "../../../../../assets/styles/sass/styles.scss";
+
+.apartment-list-container {
+  .company-info {
+    height: 40px;
+    background-color: $primary-color;
+    color: $text-white;
+  }
+
+  p {
+    color: $paragraph-primary;
+  }
+
+  .apartment-list {
+    padding: 10px;
+    overflow-y: auto;
+    height: 84vh;
+
+    @include max-height(710px) {
+      height: 80vh;
+    }
+
+    @include max-height(541px) {
+      height: 75vh;
+    }
+
+    &-card {
+      border-radius: 0px;
+      margin-bottom: 10px;
+    }
+
+    &-details {
+      margin: 5px 0px;
+
+      .rent {
+        margin-left: 3px;
+        font-weight: 400;
+        font-size: 13px;
+        margin-right: 10px;
+      }
+
+      .bed {
+        width: 15px;
+
+        &-zero {
+          width: 5px;
+        }
+      }
+    }
+
+    .light-grey {
+      color: #9e9e9e;
+    }
+
+    .image-preview {
+      width: auto;
+    }
+  }
+
+  .filter-box {
+    &-common {
+      &-text {
+        color: $text-white;
+        margin-bottom: 12px;
+
+        img {
+          margin-bottom: 2px;
+          margin-left: 3px;
+        }
+      }
+    }
+  }
+
+  .price-slider {
+    background: $secondary-color;
+    color: $primary-color-contrast;
+    border: 1px solid $primary-color;
+    border-radius: 10px;
+  }
+
+  .beadroom-button {
+    color: $text-white;
+    margin-left: 10px;
+  }
+
+  .bedroom-checkbox {
+    background: $primary-color-contrast;
+    font-size: 13px;
+    color: $secondary-color;
+    border: 1px solid $primary-color;
+    width: -webkit-fill-available;
+    text-align: center;
+
+    &:first-child {
+      border-top-left-radius: 10px;
+      border-bottom-left-radius: 10px;
+    }
+
+    &:last-child {
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
+    }
+
+    .mat-checkbox-frame {
+      color: $primary-color-contrast;
+    }
+
+    &:checked + label::before {
+      content: ""; // Checked icon
+      color: #1976d2 !important;
+      border: 1px solid #1976d2;
+      border-left: none;
+      background: url("https://my.smartapartmentdata.com/check.348c156ee21cc33a442d.svg")
+        no-repeat rgba(255, 255, 255, 0.95);
+      background-position-x: 7%;
+      background-position-y: 8px;
+    }
+  }
+
+  .favorite {
+    font-size: 14px;
+  }
+}

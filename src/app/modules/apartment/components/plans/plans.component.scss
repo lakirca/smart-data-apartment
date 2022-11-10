@@ -1,0 +1,38 @@
+@import "../../../../../assets/styles/sass/styles.scss";
+.mat-expansion-panel-header {
+  padding: 5px;
+}
+
+.mat-expansion-panel:not([class*="mat-elevation-z"]) {
+  box-shadow: none;
+  border-top: 1px solid $secondary-color;
+}
+
+.plan {
+  overflow-y: auto;
+  @include common-height-container;
+
+  .special-offer {
+    padding: 5px;
+  }
+
+  h3 {
+    color: $primary-color-contrast;
+  }
+
+  h4 {
+    font-size: 14px;
+  }
+
+  p {
+    color: $paragraph-primary;
+  }
+
+  .text {
+    margin-left: 57px;
+  }
+
+  ::ng-deep .mat-list-item-content {
+    padding: 0px 0px !important;
+  }
+}

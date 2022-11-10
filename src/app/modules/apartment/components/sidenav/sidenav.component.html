@@ -1,0 +1,26 @@
+<div class="sidenav">
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav id="sidenavContainer" #sidenav mode="side" [opened]="true">
+      <!-- APARTMENT LIST ITEM -->
+      <smart-apartment-list-item
+        *ngIf="activeQuery?.item == 'apartmentItem'; else apartmentList"
+      ></smart-apartment-list-item>
+
+      <!-- APRTMENT LIST -->
+      <ng-template #apartmentList>
+        <smart-apartment-list
+          (openSidenavClick)="toggleSidenav($event, sidenav)"
+        ></smart-apartment-list>
+      </ng-template>
+    </mat-sidenav>
+    <mat-sidenav-content class="sidenav-content">
+      <div class="sidenav-content__wrapper">
+        <!-- MAP -->
+        <smart-map
+          [sidenavState]="sidenav"
+          (openSidenavClick)="toggleSidenav($event, sidenav)"
+        ></smart-map>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

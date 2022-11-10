@@ -1,0 +1,13 @@
+<div class="gallery mt-5 pointer">
+  <!-- GALLERY LIST -->
+  <div fxLayout="column" fxLayoutAlign="center center" class="pad-b-20">
+    <div *ngFor="let photo of galleryItem; let i = index">
+        <smart-image-wizard
+          [image]="photo"
+          [gallery]="galleryItem"
+          [index]="i"
+          [imgSize]="435"
+        ></smart-image-wizard>
+    </div>
+  </div>
+</div>

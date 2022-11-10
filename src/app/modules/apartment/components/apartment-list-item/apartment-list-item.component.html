@@ -1,0 +1,106 @@
+<div class="apartment-list-item-container">
+  <div *ngIf="apartmentItemList$ | async as apartmentItem; else loader">
+    <!-- HEADER -->
+    <mat-toolbar class="company-info" *ngIf="showGallery">
+      <h4 class="flex-center" (click)="toggleGallery()">
+        <i class="material-icons arrow-back">arrow_back</i>
+        Back to Results
+      </h4>
+    </mat-toolbar>
+
+    <div *ngIf="!showGallery">
+      <mat-toolbar class="company-info pointer">
+        <h4 class="flex-center" (click)="goBack()">
+          <i class="material-icons arrow-back">arrow_back</i>
+          Back to Results
+        </h4>
+      </mat-toolbar>
+
+      <!-- SUB HEADER -->
+      <mat-toolbar class="primary-light">
+        <div
+          fxLayout="row"
+          fxLayoutAlign="space-between center"
+          fxFlex="100"
+          class="filter-box"
+        >
+          <div>
+            <h4>{{ apartmentItem.name }}</h4>
+            <h6 class="city">{{ apartmentItem.city }}</h6>
+          </div>
+
+          <div
+            (click)="
+              toggleFavorite(
+                apartmentItem,
+                favoritesList ? favoritesList[0]?.favorite : false
+              )
+            "
+          >
+            <button
+              mat-button
+              class="favButton"
+              [ngClass]="{
+                active:
+                  changeColor || (favoritesList && favoritesList[0]?.favorite)
+              }"
+            >
+              <mat-icon>favorite</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-toolbar>
+
+      <!-- GALLERY IMAGES -->
+      <div fxLayout="row" fxLayoutAlign="space-between center" class="mr-5">
+        <div
+          *ngFor="let photo of apartmentItem.photos.slice(0, 3); last as last"
+          class="photo-container pointer"
+          (click)="toggleGallery()"
+        >
+          <img [src]="photo" class="photo-item" />
+          <p *ngIf="last" class="photo-item-text">
+            {{ apartmentItem.photos.length }} Photos
+          </p>
+        </div>
+      </div>
+
+      <!-- APARTMENT ITEM -->
+      <mat-tab-group mat-stretch-tabs>
+        <mat-tab label="Plans">
+          <div>
+            <smart-plans [apartmentItem]="apartmentItem"></smart-plans>
+          </div>
+        </mat-tab>
+        <mat-tab label="Overview">
+          <smart-overview [apartmentItem]="apartmentItem"></smart-overview>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+
+    <!-- GALLERY -->
+    <smart-gallery
+      [galleryItem]="apartmentItem.photos"
+      *ngIf="showGallery"
+    ></smart-gallery>
+  </div>
+
+  <!-- LOADER -->
+  <ng-template #loader>
+    <div class="ph-item">
+      <div class="ph-col-12">
+        <div class="ph-row">
+          <div class="ph-col-6 big"></div>
+          <div class="ph-col-4 empty big"></div>
+          <div class="ph-col-2 big"></div>
+          <div class="ph-col-12 big"></div>
+          <div class="ph-col-12 big mb-50"></div>
+        </div>
+        <div class="ph-picture"></div>
+        <div class="ph-picture"></div>
+        <div class="ph-picture"></div>
+        <div class="ph-picture"></div>
+      </div>
+    </div>
+  </ng-template>
+</div>
