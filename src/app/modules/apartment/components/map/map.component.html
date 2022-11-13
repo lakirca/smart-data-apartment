@@ -1,0 +1,19 @@
+<!-- MAP -->
+<div class="map-wrap">
+  <a href="https://www.maptiler.com" class="watermark"
+    ><img src="https://api.maptiler.com/resources/logo.svg" alt="MapTiler logo"
+  /></a>
+
+  <div class="map" #map></div>
+</div>
+
+<!-- MENU BUTTON FOR MOBILE -->
+<div
+  class="menu-item"
+  *ngIf="!sidenavState._opened && screenWidth <= 480"
+  (click)="closeSidenav()"
+>
+  <button mat-mini-fab color="primary">
+    <mat-icon>menu</mat-icon>
+  </button>
+</div>

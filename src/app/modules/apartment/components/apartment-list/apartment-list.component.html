@@ -1,0 +1,241 @@
+<div class="apartment-list-container">
+  <div *ngIf="apartmentList$ | async as apartmentList">
+    <!-- HEADER -->
+    <mat-toolbar class="company-info">
+      <div fxLayout="row" fxLayoutAlign="space-between center" fxFlex="100%">
+        <h4>
+          {{
+            apartmentList.agentInfo?.firstname +
+              " " +
+              apartmentList.agentInfo?.lastname
+          }}
+          | {{ apartmentList.agentInfo?.company }}
+        </h4>
+
+        <div
+          fxLayout="row"
+          class="pointer"
+          (click)="openSidenav()"
+          *ngIf="screenWidth <= 480"
+        >
+          <mat-icon>map</mat-icon>
+        </div>
+      </div>
+    </mat-toolbar>
+
+    <!-- SUB HEADER -->
+    <mat-toolbar class="primary-light">
+      <div
+        fxLayout="row"
+        fxLayoutAlign="space-between center"
+        fxFlex="100"
+        class="filter-box pointer"
+      >
+        <div class="filter-box-common" (click)="toggleRents()">
+          <p class="filter-box-common-text">
+            Rent
+            <img
+              src="https://my.smartapartmentdata.com/assets/images/arrow-down-white.svg"
+              width="7px"
+            />
+          </p>
+
+          <p class="filter-box-common-text -mt-12">
+            {{ minPrice | currency: "USD":"symbol":"1.0-0" }} -
+            {{
+              selectedPrice >= 1
+                ? (selectedPrice | currency: "USD":"symbol":"1.0-0")
+                : (maxPrice | currency: "USD":"symbol":"1.0-0")
+            }}
+          </p>
+        </div>
+
+        <div class="filter-box-common" (click)="toggleBeds()">
+          <p class="filter-box-common-text">
+            Bedrooms
+            <img
+              src="https://my.smartapartmentdata.com/assets/images/arrow-down-white.svg"
+              width="7px"
+            />
+          </p>
+
+          <p class="filter-box-common-text -mt-12">
+            {{ studio ? "Studio ," : null }}
+            {{ oneBed ? " 1 Bed ," : null }} {{ twoBed ? " 2 Bed ," : null }}
+            {{ threeBed ? " 3 Bed " : null }}
+          </p>
+        </div>
+      </div>
+    </mat-toolbar>
+
+    <!-- PRICE RANGE -->
+    <mat-toolbar class="primary-light" *ngIf="togglePriceFilter">
+      <div
+        class="price-slider"
+        fxLayout="row"
+        fxLayoutAlign="center center"
+        fxFlex="100%"
+      >
+        <mat-slider
+          color="primary"
+          fxFlex="100%"
+          [max]="maxPrice"
+          [min]="minPrice"
+          [step]="10"
+          [(ngModel)]="selectedPrice"
+          thumbLabel
+        >
+        </mat-slider>
+      </div>
+      <button class="beadroom-button" mat-button (click)="toggleRents()">
+        Done
+      </button>
+    </mat-toolbar>
+
+    <!-- BEDROOMS -->
+    <mat-toolbar class="primary-light" *ngIf="toggleBedFilter">
+      <div
+        fxLayout="row"
+        fxLayoutAlign="space-between center"
+        fxFlex="100%"
+        fxLayoutGap="1px"
+      >
+        <mat-checkbox
+          color="secondary"
+          class="bedroom-checkbox"
+          [(ngModel)]="studio"
+          >Studio</mat-checkbox
+        >
+        <mat-checkbox
+          color="secondary"
+          class="bedroom-checkbox"
+          [(ngModel)]="oneBed"
+          >1 Bed</mat-checkbox
+        >
+        <mat-checkbox
+          color="secondary"
+          class="bedroom-checkbox"
+          [(ngModel)]="twoBed"
+          >2 Bed</mat-checkbox
+        >
+        <mat-checkbox
+          color="secondary"
+          class="bedroom-checkbox"
+          [(ngModel)]="threeBed"
+          >3 Bed</mat-checkbox
+        >
+      </div>
+      <button mat-button class="beadroom-button" (click)="toggleBeds()">
+        Done
+      </button>
+    </mat-toolbar>
+
+    <!-- APARTMENT LIST -->
+    <mat-nav-list class="apartment-list pointer">
+      <mat-card
+        class="apartment-list-card"
+        *ngFor="
+          let list of apartmentList.records
+            | filterPrice: selectedPrice
+            | filterBedrooms: studio:oneBed:twoBed:threeBed;
+          index as i
+        "
+        routerLink="/"
+        [queryParams]="{
+          item: 'apartmentItem',
+          propertyId: list.propertyID
+        }"
+      >
+        <mat-card-content>
+          <div fxLayout="row" fxLayoutAlign="space-between center">
+            <div fxLayout="column" fxLayoutAlign="start start">
+              <h4>
+                {{ list.name }}
+
+                <span *ngIf="getFavoritesByID(list.propertyID)">
+                  <mat-icon mat-button color="warn" class="favorite"
+                    >favorite</mat-icon
+                  >
+                </span>
+              </h4>
+              <p>{{ list.streetAddress }}, {{ list.city }}</p>
+
+              <div fxLayout="row wrap" class="apartment-list-details">
+                <div
+                  *ngFor="
+                    let floor of list.floorplans
+                      | filterPriceItem: selectedPrice
+                      | filterBedroomItem: studio:oneBed:twoBed:threeBed
+                  "
+                >
+                  <div fxLayout="row">
+                    <img
+                      src="https://my.smartapartmentdata.com/assets/images/0-bed.svg"
+                      *ngIf="floor.bedrooms == 0"
+                      class="bed-zero"
+                    />
+                    <img
+                      src="https://my.smartapartmentdata.com/assets/images/1-bed.svg"
+                      *ngIf="floor.bedrooms == 1"
+                      class="bed"
+                    />
+                    <img
+                      src="https://my.smartapartmentdata.com/assets/images/2-bed.svg"
+                      *ngIf="floor.bedrooms == 2"
+                      class="bed"
+                    />
+                    <img
+                      src="https://my.smartapartmentdata.com/assets/images/3-bed.svg"
+                      *ngIf="floor.bedrooms == 3"
+                      class="bed"
+                    />
+                    <span class="rent">{{ floor.price | currency }}+ </span>
+                  </div>
+                </div>
+              </div>
+
+              <p class="light-grey">
+                {{ list.highValueAmenities.length }} High Value Amenities
+              </p>
+            </div>
+            <div>
+              <img
+                mat-card-sm-image
+                [src]="list.photo"
+                class="image-preview"
+                *ngIf="list.photo; else preview"
+              />
+
+              <ng-template #preview>
+                <img
+                  mat-card-sm-image
+                  src="http://flxtable.com/wp-content/plugins/pl-platform/engine/ui/images/image-preview.jpg"
+                  class="image-preview"
+                />
+              </ng-template>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </mat-nav-list>
+  </div>
+
+  <!-- LOADER -->
+  <div *ngIf="loader$ | async">
+    <div class="ph-item">
+      <div class="ph-col-12">
+        <div class="ph-row">
+          <div class="ph-col-6 big"></div>
+          <div class="ph-col-4 empty big"></div>
+          <div class="ph-col-2 big"></div>
+          <div class="ph-col-12 big"></div>
+          <div class="ph-col-12 big mb-50"></div>
+        </div>
+        <div class="ph-picture"></div>
+        <div class="ph-picture"></div>
+        <div class="ph-picture"></div>
+        <div class="ph-picture"></div>
+      </div>
+    </div>
+  </div>
+</div>
