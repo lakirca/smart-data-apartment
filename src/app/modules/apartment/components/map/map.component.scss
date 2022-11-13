@@ -5,7 +5,6 @@
 }
 
 .marker {
-  background-image: url("https://my.smartapartmentdata.com/assets/images/pin/pin-red.svg");
   background-size: cover;
   width: 50px;
   height: 50px;
@@ -13,10 +12,41 @@
   cursor: pointer;
 }
 
+
 .menu-item {
   position: absolute;
   right: 3px;
   top: 3px;
   z-index: 9999;
   transform: translate3d(-15px, 15px, 0px);
+}
+
+.map-wrap {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+}
+
+.map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.watermark {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 999;
+}
+.smartmark {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 999;
+  width: auto;
+}
+.smartmark .icon {
+  height: 40px;
+  width: auto;
 }

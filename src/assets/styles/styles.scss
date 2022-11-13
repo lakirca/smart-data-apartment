@@ -3,6 +3,7 @@
 @import "sass/variable.scss";
 @import "~@angular/material/prebuilt-themes/deeppurple-amber.css";
 @import "~/node_modules/placeholder-loading/src/scss/placeholder-loading";
+@import '~maplibre-gl/dist/maplibre-gl.css';
 
 html,
 body {

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { getFavourites } from '@smart/shared/helpers/utils';
-import * as mapboxgl from 'mapbox-gl';
+import * as maplibregl from 'maplibre-gl';
 
 @Injectable({
   providedIn: 'root',
@@ -21,12 +21,13 @@ export class MapService {
 
   getMapCenter(mapPins: any) {
     const bounds: any = [];
+
     mapPins.forEach(function (marker: any) {
       bounds.push(
-        new mapboxgl.LngLat(marker.geocode.Longitude, marker.geocode.Latitude)
+        new maplibregl.LngLat(marker.geocode.Longitude, marker.geocode.Latitude)
       );
     });
-    let llb = new mapboxgl.LngLatBounds(...bounds);
+    let llb = new maplibregl.LngLatBounds(...bounds);
     const centerCoordinates = llb.getCenter();
     return centerCoordinates;
   }
@@ -56,7 +57,7 @@ export class MapService {
 
       const selectedMarker = Array.from(
         document.getElementsByClassName(
-          'mapboxgl-marker'
+          'maplibre-marker'
         ) as HTMLCollectionOf<HTMLElement>
       );
 
@@ -80,12 +81,18 @@ export class MapService {
       marker.geocode.Latitude,
     ]);
 
-    makerElt.style.backgroundImage = marker?.favorite
+    makerElt.style.backgroundImage = getFavourites(
+      marker?.propertyID
+    )
       ? 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-red-heart.svg)'
       : 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-red.svg)';
 
-    makerElt.style.width = marker?.favorite ? '48px' : '32px';
-    makerElt.style.height = marker?.favorite ? '48px' : '32px';
+    makerElt.style.width = getFavourites(marker?.propertyID)
+      ? '48px'
+      : '32px';
+    makerElt.style.height = getFavourites(marker?.propertyID)
+      ? '48px'
+      : '32px';
     makerElt.style.backgroundSize = '100%';
     return makerElt;
   }
@@ -94,23 +101,18 @@ export class MapService {
     makerElt: any,
     marker: any,
     map: any,
-    markerElements: any
   ) {
-    const markerElement = new mapboxgl.Marker(makerElt)
+    const markerElement = new maplibregl.Marker(makerElt)
       .setLngLat([marker.geocode.Longitude, marker.geocode.Latitude])
       .setPopup(
-        new mapboxgl.Popup().setHTML(
+        new maplibregl.Popup().setHTML(
           `<h4>${marker?.name}</h4>
-      <p style="color: #6c757d">
-      ${marker?.city}, ${marker?.streetAddress}
-      </p>`
+    <p style="color: #6c757d">
+    ${marker?.city}, ${marker?.streetAddress}
+    </p>`
         )
       )
       .addTo(map);
-    markerElements.push({
-      ...markerElement,
-      propertyid: marker?.propertyID,
-    });
 
     const markerDiv = markerElement.getElement();
 

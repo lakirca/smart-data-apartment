@@ -1,11 +1,14 @@
 import {
+  AfterViewInit,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
   HostListener,
   Input,
   OnInit,
   Output,
+  ViewChild,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -13,29 +16,40 @@ import { Subscription } from 'rxjs';
 
 import { select, Store } from '@ngrx/store';
 
-import * as mapboxgl from 'mapbox-gl';
+import * as maplibre from 'maplibre-gl';
 
 import * as selectors from '@smart/modules/apartment/state/apartment.selectors';
 import { MapService } from '@smart/core/services';
-import { mapStyle } from '@smart/shared/helpers/utils';
+import {
+  getFavourites,
+  mapStyle,
+  parseMapPoints,
+} from '@smart/shared/helpers/utils';
 
 import { environment } from '@env/environment';
 import { ApartmentState } from '../../state/apartment.state';
-import { MAP_LAYERS } from '@smart/shared/helpers/commons';
+import {
+  MAPTILER_API_KEY,
+  MAPTILER_MAP_STYLE,
+  MAP_LAYERS,
+} from '@smart/shared/helpers/commons';
 
 @Component({
   selector: 'smart-map',
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss'],
 })
-export class MapComponent implements OnInit {
+export class MapComponent implements AfterViewInit {
   @Input() sidenavState: any;
   @Output() openSidenavClick: EventEmitter<any> = new EventEmitter<any>();
 
+  @ViewChild('map') private mapContainer!: ElementRef<HTMLElement>;
+
   mapPins: any = [];
-  map: mapboxgl.Map;
+
+  map: maplibre.Map;
   style = mapStyle;
-  zoom = 12.2;
+  zoom = 9;
   source: any;
   markerElements: any = [];
   mapLoaded: boolean = false;
@@ -67,7 +81,9 @@ export class MapComponent implements OnInit {
             this.mapLoaded &&
             data.productId == -1
           ) {
-            this.mapPins = [...data.apartmentList.records];
+            this.mapPins = parseMapPoints(data.apartmentList.records);
+            this.markerElements = data.apartmentList.records;
+
             this.zoom = 16;
             this.loadMapWithMarkers();
             this.cd.markForCheck();
@@ -75,7 +91,11 @@ export class MapComponent implements OnInit {
             this.mapPins = [];
             this.zoom = 16;
 
-            this.mapPins.push(data?.apartmentItem);
+            const newPins = [];
+            newPins.push(data?.apartmentItem);
+            this.markerElements = newPins;
+            this.mapPins = parseMapPoints(newPins);
+
             this.zoomToMarker();
             this.cd.detectChanges();
           }
@@ -83,19 +103,25 @@ export class MapComponent implements OnInit {
           if (data.productId && data.apartmentItem) {
             this.mapPins = [];
             this.zoom = 16;
-            this.mapPins.push(data?.apartmentItem);
+            const newPins = [];
+            newPins.push(data?.apartmentItem);
+            this.markerElements = newPins;
+            this.mapPins = parseMapPoints(newPins);
+
             this.zoomToMarker();
           }
         })
     );
   }
 
-  ngOnInit() {
+  ngAfterViewInit() {
     this.store
       .pipe(select(selectors.getApartmentsData()))
       .subscribe((response) => {
         if (response?.length > 1) {
-          this.mapPins = [...response];
+          this.mapPins = parseMapPoints(response);
+          this.markerElements = response;
+
           this.buildMap();
           this.cd.detectChanges();
         }
@@ -105,31 +131,33 @@ export class MapComponent implements OnInit {
   }
 
   buildMap() {
-    this.map = new mapboxgl.Map({
-      accessToken: environment.mapbox.accessToken,
-      container: 'map',
-      style: this.style,
+    this.map = new maplibre.Map({
       zoom: this.zoom,
       center: this.getMapCenterCoordinates(),
       scrollZoom: true,
+      container: this.mapContainer.nativeElement,
+      style: `${MAPTILER_MAP_STYLE}?key=${MAPTILER_API_KEY}`,
+      interactive: true,
     });
 
-    this.map.on('load', (event) => {
-      const markersPins: any = this.convertMapPinsToMarkers(this.mapPins);
+    this.map.addControl(new maplibre.NavigationControl(), 'top-right');
+    this.map.on('load', (map) => {
+      const markersPins: any = parseMapPoints(this.mapPins);
 
       this.addSource(markersPins);
 
-      this.source = this.map?.getSource('SmartDataApartments');
+      this.source = this.map?.getSource(MAP_LAYERS.id);
 
       this.addLayers();
 
-      this.mapLoaded = true;
       this.loadMapWithMarkers();
+
+      this.mapLoaded = true;
     });
   }
 
   addSource(markersPins: any) {
-    this.map?.addSource('SmartDataApartments', {
+    this.map?.addSource(MAP_LAYERS.id, {
       type: 'geojson',
       data: {
         type: 'FeatureCollection',
@@ -147,39 +175,16 @@ export class MapComponent implements OnInit {
   }
 
   loadMapWithMarkers() {
-    // DELETE ALL MARKERS
-    this.markerElements.forEach((markerToRemove: any) => {
-      let markerPinLayer: any = document.getElementById(
-        markerToRemove.propertyid
-      );
-      try {
-        markerPinLayer.remove();
-      } catch (e) {}
-    });
-
-    this.markerElements = [];
-
-    // 1) ADD MARKER TO MAP
-    const bounds = [];
-    this.mapPins.forEach((marker: any) => {
-      bounds.push(
-        new mapboxgl.LngLat(marker.geocode.Longitude, marker.geocode.Latitude)
-      );
-
-      // 2) CREATE MARKER LAYER
+    this.markerElements.forEach((marker: any) => {
       let markerElt: any = document.createElement('div');
-
       markerElt = this.mapService.createMapLayerOnMap(marker, markerElt);
 
-      // 3) CREATE CUSTOM MARKER HTML & POPUP
       const markerElement = this.mapService.createCustomMarkerAndPopup(
         markerElt,
         marker,
-        this.map,
-        this.markerElements
+        this.map
       );
 
-      // 4) EVENT WHEN MARKER IS CLICKED
       markerElement.getElement().addEventListener('click', (event: any) => {
         this.mapService.markerClicked(
           event,
@@ -189,7 +194,6 @@ export class MapComponent implements OnInit {
         );
       });
 
-      // 5) CHANGE COLOR OF SELECTED MARKER ON RELOAD
       if (this.mapPins.length == 1) {
         if (this.activeQuery?.propertyId == marker.propertyID) {
           markerElt.style.backgroundImage = marker?.favorite
@@ -202,7 +206,7 @@ export class MapComponent implements OnInit {
     this.map.flyTo({
       center: this.getMapCenterCoordinates(),
       essential: true,
-      zoom: 12.2,
+      zoom: 9,
     });
   }
 
