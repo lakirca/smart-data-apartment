@@ -1,9 +1,15 @@
-import { Component, Input, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnInit,
+} from '@angular/core';
 
 @Component({
   selector: 'smart-image-wizard',
   templateUrl: './image-wizard.component.html',
   styleUrls: ['./image-wizard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImageWizardComponent implements OnInit {
   @Input() image: string;
@@ -23,7 +29,7 @@ export class ImageWizardComponent implements OnInit {
 
   getImagesList() {
     if (this.gallery) {
-      this.imageObject = this.gallery.map((item: any) => {
+      this.imageObject = this.gallery.map((item) => {
         return { image: item };
       });
     } else {
@@ -31,7 +37,7 @@ export class ImageWizardComponent implements OnInit {
     }
   }
 
-  showLightbox(index: any) {
+  showLightbox(index: number) {
     this.currentIndex = index;
     this.showFlag = true;
   }

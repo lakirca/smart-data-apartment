@@ -1,28 +1,33 @@
 import {
-  ChangeDetectorRef,
+  ChangeDetectionStrategy,
   Component,
   EventEmitter,
   HostListener,
-  OnDestroy,
-  OnInit,
+  Input,
+  OnChanges,
   Output,
+  SimpleChanges,
 } from '@angular/core';
-import * as selectors from '@smart/modules/apartment/state/apartment.selectors';
+import { ApartmentItem } from '@smart/shared/models/apartment-item.model';
+import { IApartmentList } from '@smart/shared/interfaces/apartment-list.interface';
 import { CommonService } from '@smart/shared/services/common.service';
-import { select, Store } from '@ngrx/store';
-import { Observable, Subscription } from 'rxjs';
-import { ApartmentState } from '../../state/apartment.state';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'smart-apartment-list',
   templateUrl: './apartment-list.component.html',
   styleUrls: ['./apartment-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ApartmentListComponent implements OnInit, OnDestroy {
-  @Output() openSidenavClick: EventEmitter<any> = new EventEmitter<any>();
+export class ApartmentListComponent implements OnChanges {
+  @Input() apartmentList: IApartmentList;
+  @Input() apartmentItemList: ApartmentItem[];
+  @Input() loader: boolean;
+  @Input() priceRange: ApartmentItem[];
 
-  apartmentList$: Observable<any> | undefined;
-  loader$: Observable<any> | undefined;
+  @Output() openSidenavClick: EventEmitter<any> = new EventEmitter<any>();
+  @Output() selectMarker: EventEmitter<any> = new EventEmitter<any>();
+
   togglePriceFilter: boolean = false;
   toggleBedFilter: boolean = false;
   minPrice: number = 0;
@@ -33,88 +38,58 @@ export class ApartmentListComponent implements OnInit, OnDestroy {
   twoBed: boolean = true;
   threeBed: boolean = true;
   showFavorites: boolean = false;
-  apartmentRangeList: Array<any> = [];
   favoritesList: Array<any> = [];
   subscription: Subscription = new Subscription();
   screenWidth: number = 0;
 
   @HostListener('window:resize', ['$event'])
-  onResize(event?: any) {
+  onResize(event?: Event) {
     this.screenWidth = window.innerWidth;
   }
 
-  constructor(
-    private store: Store<ApartmentState>,
-    private commonService: CommonService,
-    private cd: ChangeDetectorRef
-  ) {
+  constructor(private commonService: CommonService) {
     this.onResize();
-  }
-
-  ngOnInit(): void {
-    this.loader$ = this.store.pipe(select(selectors.getApartmentLoader()));
-
-    this.apartmentList$ = this.store.pipe(select(selectors.getApartmentList()));
-
-    this.getPriceRange();
     this.getFavorites();
   }
 
-  /**
-   * TOGGLE RENTS PRICE BUTTON
-   */
+  ngOnChanges(changes: SimpleChanges): void {
+    const range = changes['priceRange'];
+    if (range && range.currentValue !== range.previousValue)
+      this.getPriceRange();
+  }
+
+  onSelectMarker(apartmentItems: ApartmentItem[], propertyID: number) {
+    this.selectMarker.emit({ propertyID, apartmentItems });
+  }
+
   toggleRents() {
     this.toggleBedFilter = false;
     this.togglePriceFilter = !this.togglePriceFilter;
   }
 
-  /**
-   * TOGGLE BEDROOMS BUTTON
-   */
   toggleBeds() {
     this.togglePriceFilter = false;
     this.toggleBedFilter = !this.toggleBedFilter;
   }
 
-  /**
-   * GET PRICE RANGE & MIN AND MAX PRICE
-   */
   getPriceRange() {
-    this.subscription.add(
-      this.store
-        .pipe(select(selectors.getApartmentRange()))
-        .subscribe((range: any[]) => {
-          if (range?.length) {
-            this.apartmentRangeList = [...range];
+    if (this.priceRange?.length) {
+      const priceList = this.priceRange.map((item: any) => item.price);
 
-            let priceList = [...range];
-            priceList = range.map((item) => item.price);
-
-            this.minPrice = Math.min(...priceList);
-            this.maxPrice = Math.max(...priceList);
-            this.cd.markForCheck();
-          }
-        })
-    );
+      this.minPrice = Math.min(...priceList);
+      this.maxPrice = Math.max(...priceList);
+    }
   }
 
-  /**
-   * GET FAVORITES
-   */
   getFavorites() {
     this.favoritesList = this.commonService.getFavourities();
   }
 
-  /**
-   * MAP FAVORITES ITEM BY PROPERTYID
-   * @param propertyID PROPERTYID
-   * @returns BOOLEAN (WEATHER CURRENT PROPERTYID IS FAVORITE OR NOT)
-   */
-  getFavoritesByID(propertyID: any) {
+  getFavoritesByID(propertyID: number) {
     let favorites: boolean = false;
 
     if (this.favoritesList?.length) {
-      this.favoritesList?.forEach((item: any) => {
+      this.favoritesList?.forEach((item) => {
         if (item.propertyID == propertyID) {
           favorites = true;
         }
@@ -128,9 +103,5 @@ export class ApartmentListComponent implements OnInit, OnDestroy {
    */
   openSidenav() {
     this.openSidenavClick.emit('open');
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
   }
 }

@@ -1,23 +1,16 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { getFavourites } from '@smart/shared/helpers/utils';
+import { ApartmentItem } from '@smart/shared/models/apartment-item.model';
 import * as maplibregl from 'maplibre-gl';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MapService {
-  constructor() {}
+  map: maplibregl.Map;
 
-  convertPinsToMarker(mapPins: any[]) {
-    return mapPins.map((mapPin) => ({
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [mapPin.geocode.Longitude, mapPin.geocode.Latitude],
-      },
-      properties: {},
-    }));
-  }
+  constructor() {}
 
   getMapCenter(mapPins: any) {
     const bounds: any = [];
@@ -27,48 +20,26 @@ export class MapService {
         new maplibregl.LngLat(marker.geocode.Longitude, marker.geocode.Latitude)
       );
     });
+
     let llb = new maplibregl.LngLatBounds(...bounds);
     const centerCoordinates = llb.getCenter();
     return centerCoordinates;
   }
 
-  flyToMarker(focusedMarker: any, map: any) {
-    map.flyTo({
+  flyToMarker(focusedMarker: any) {
+    this.map.flyTo({
       center: [focusedMarker.geocode.Longitude, focusedMarker.geocode.Latitude],
       essential: true,
       zoom: 16,
     });
   }
 
-  zoomIntoSelectedMarker(mapPins: any, markerElements: any, map: any) {
-    const focusedMarker = mapPins[0];
-
-    try {
-      const toRemoveMarkers = markerElements.filter(
-        (markerElement: any) =>
-          markerElement.propertyid !== focusedMarker.propertyID
-      );
-      toRemoveMarkers.forEach((markerToRemove: any) => {
-        let markerPinLayer: any = document.getElementById(
-          markerToRemove.propertyid
-        );
-        markerPinLayer.remove();
-      });
-
-      const selectedMarker = Array.from(
-        document.getElementsByClassName(
-          'maplibre-marker'
-        ) as HTMLCollectionOf<HTMLElement>
-      );
-
-      selectedMarker.forEach((element) => {
-        element.style.backgroundImage = getFavourites(focusedMarker.propertyID)
-          ? 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-blue-heart.svg)'
-          : 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-blue.svg)';
-      });
-
-      this.flyToMarker(focusedMarker, map);
-    } catch (e) {}
+  goBack(focusedMarker: any) {
+    this.map.flyTo({
+      center: [focusedMarker.geocode.Longitude, focusedMarker.geocode.Latitude],
+      essential: true,
+      zoom: 9,
+    });
   }
 
   createMapLayerOnMap(marker: any, makerElt: any) {
@@ -81,27 +52,17 @@ export class MapService {
       marker.geocode.Latitude,
     ]);
 
-    makerElt.style.backgroundImage = getFavourites(
-      marker?.propertyID
-    )
+    makerElt.style.backgroundImage = getFavourites(marker?.propertyID)
       ? 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-red-heart.svg)'
       : 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-red.svg)';
 
-    makerElt.style.width = getFavourites(marker?.propertyID)
-      ? '48px'
-      : '32px';
-    makerElt.style.height = getFavourites(marker?.propertyID)
-      ? '48px'
-      : '32px';
+    makerElt.style.width = getFavourites(marker?.propertyID) ? '48px' : '32px';
+    makerElt.style.height = getFavourites(marker?.propertyID) ? '48px' : '32px';
     makerElt.style.backgroundSize = '100%';
     return makerElt;
   }
 
-  createCustomMarkerAndPopup(
-    makerElt: any,
-    marker: any,
-    map: any,
-  ) {
+  createCustomMarkerAndPopup(makerElt: any, marker: any) {
     const markerElement = new maplibregl.Marker(makerElt)
       .setLngLat([marker.geocode.Longitude, marker.geocode.Latitude])
       .setPopup(
@@ -112,31 +73,50 @@ export class MapService {
     </p>`
         )
       )
-      .addTo(map);
+      .addTo(this.map);
 
     const markerDiv = markerElement.getElement();
 
     markerDiv.addEventListener('mouseenter', () => markerElement.togglePopup());
-
     markerDiv.addEventListener('mouseleave', () => markerElement.togglePopup());
+
     return markerElement;
   }
 
-  markerClicked(event: any, map: any, markerElement: any, router: any) {
+  loadMapWithMarkers(markerElements: ApartmentItem[], router: Router) {
+    markerElements.forEach((marker) => {
+      let markerElt: any = document.createElement('div');
+      markerElt = this.createMapLayerOnMap(marker, markerElt);
+
+      const markerElement = this.createCustomMarkerAndPopup(markerElt, marker);
+
+      markerElement.getElement().addEventListener('click', (event: any) => {
+        this.markerClicked(event, markerElement, router);
+      });
+
+      markerElt.style.backgroundImage = getFavourites(marker.propertyID)
+        ? 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-red-heart.svg)'
+        : 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-red.svg)';
+    });
+  }
+
+  markerClicked(event: any, markerElement: maplibregl.Marker, router: Router) {
+    const propertyID = event?.srcElement['id'] || '';
+
     const propertyCoordinates = JSON.parse(
       event?.srcElement['data-coordinates'] || ''
     );
-    map.flyTo({
+
+    this.map.flyTo({
       center: propertyCoordinates,
       essential: true,
       zoom: 16,
     });
 
     markerElement.togglePopup();
-    const propertyId = event?.srcElement['id'] || '';
 
     router.navigate(['/'], {
-      queryParams: { item: 'apartmentItem', propertyId: propertyId },
+      queryParams: { propertyID },
     });
   }
 }

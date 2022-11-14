@@ -1,15 +1,15 @@
 <div class="apartment-list-container">
-  <div *ngIf="apartmentList$ | async as apartmentList">
+  <div *ngIf="apartmentList && !apartmentItemList">
     <!-- HEADER -->
     <mat-toolbar class="company-info">
       <div fxLayout="row" fxLayoutAlign="space-between center" fxFlex="100%">
         <h4>
           {{
-            apartmentList.agentInfo?.firstname +
+            apartmentList.agentInfo.firstname +
               " " +
-              apartmentList.agentInfo?.lastname
+              apartmentList.agentInfo.lastname
           }}
-          | {{ apartmentList.agentInfo?.company }}
+          | {{ apartmentList.agentInfo.company }}
         </h4>
 
         <div
@@ -140,23 +140,20 @@
             | filterBedrooms: studio:oneBed:twoBed:threeBed;
           index as i
         "
-        routerLink="/"
-        [queryParams]="{
-          item: 'apartmentItem',
-          propertyId: list.propertyID
-        }"
+        (click)="onSelectMarker(apartmentList.records, list.propertyID)"
       >
         <mat-card-content>
           <div fxLayout="row" fxLayoutAlign="space-between center">
             <div fxLayout="column" fxLayoutAlign="start start">
               <h4>
+                <mat-icon
+                  *ngIf="getFavoritesByID(list.propertyID)"
+                  mat-button
+                  color="accent"
+                  class="favorite"
+                  >favorite</mat-icon
+                >
                 {{ list.name }}
-
-                <span *ngIf="getFavoritesByID(list.propertyID)">
-                  <mat-icon mat-button color="warn" class="favorite"
-                    >favorite</mat-icon
-                  >
-                </span>
               </h4>
               <p>{{ list.streetAddress }}, {{ list.city }}</p>
 
@@ -221,7 +218,7 @@
   </div>
 
   <!-- LOADER -->
-  <div *ngIf="loader$ | async">
+  <div *ngIf="loader || (!apartmentList && apartmentItemList)">
     <div class="ph-item">
       <div class="ph-col-12">
         <div class="ph-row">

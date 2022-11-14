@@ -31,9 +31,10 @@
                 </div>
 
                 <div
-                  fxLayout="row"
+                  fxLayout.ht-md="row"
                   fxLayoutAlign="space-between center"
                   class="text"
+                  fxHide.lt-md
                 >
                   <h4>
                     {{ plan.washerDryer.replace("_", " ") | titlecase }}

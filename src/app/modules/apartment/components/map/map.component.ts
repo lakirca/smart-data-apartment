@@ -1,61 +1,61 @@
 import {
-  AfterViewInit,
-  ChangeDetectorRef,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   EventEmitter,
   HostListener,
   Input,
-  OnInit,
+  OnChanges,
+  OnDestroy,
   Output,
+  SimpleChanges,
   ViewChild,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-
-import { Subscription } from 'rxjs';
-
-import { select, Store } from '@ngrx/store';
+import {
+  ActivatedRoute,
+  NavigationStart,
+  Router,
+  NavigationEnd,
+  Event,
+} from '@angular/router';
 
 import * as maplibre from 'maplibre-gl';
 
-import * as selectors from '@smart/modules/apartment/state/apartment.selectors';
-import { MapService } from '@smart/core/services';
-import {
-  getFavourites,
-  mapStyle,
-  parseMapPoints,
-} from '@smart/shared/helpers/utils';
+import { Subscription } from 'rxjs';
 
-import { environment } from '@env/environment';
-import { ApartmentState } from '../../state/apartment.state';
+import { MapService } from '@smart/core/services';
+
+import { getFavourites, mapStyle } from '@smart/shared/helpers/utils';
 import {
   MAPTILER_API_KEY,
   MAPTILER_MAP_STYLE,
   MAP_LAYERS,
 } from '@smart/shared/helpers/commons';
 
+import { ApartmentItem } from '@smart/shared/models/apartment-item.model';
+import { MapPoint } from '@smart/shared/models/map-point.model';
+
 @Component({
   selector: 'smart-map',
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MapComponent implements AfterViewInit {
+export class MapComponent implements OnChanges, OnDestroy {
   @Input() sidenavState: any;
+  @Input() currentApartment: ApartmentItem;
+  @Input() mapPoints: MapPoint[];
+  @Input() markerElements: ApartmentItem[] = [];
+
   @Output() openSidenavClick: EventEmitter<any> = new EventEmitter<any>();
+  @Output() removeApartmentItem: EventEmitter<any> = new EventEmitter<any>();
 
   @ViewChild('map') private mapContainer!: ElementRef<HTMLElement>;
 
-  mapPins: any = [];
-
-  map: maplibre.Map;
-  style = mapStyle;
-  zoom = 9;
-  source: any;
-  markerElements: any = [];
-  mapLoaded: boolean = false;
   subscription: Subscription = new Subscription();
+
+  style = mapStyle;
   screenWidth: number = 0;
-  activeQuery: any;
 
   @HostListener('window:resize', ['$event'])
   onResize(event?: any) {
@@ -64,100 +64,75 @@ export class MapComponent implements AfterViewInit {
 
   constructor(
     private mapService: MapService,
-    private cd: ChangeDetectorRef,
     private router: Router,
-    private store: Store<ApartmentState>,
-    private activatedRoute: ActivatedRoute
+    private activatedRotuer: ActivatedRoute
   ) {
     this.onResize();
-    this.subscription.add(
-      this.store
-        .select(selectors.selectApartmentState)
-        .subscribe((data: ApartmentState) => {
-          if (
-            data &&
-            data.apartmentList &&
-            data.apartmentList?.records &&
-            this.mapLoaded &&
-            data.productId == -1
-          ) {
-            this.mapPins = parseMapPoints(data.apartmentList.records);
-            this.markerElements = data.apartmentList.records;
 
-            this.zoom = 16;
-            this.loadMapWithMarkers();
-            this.cd.markForCheck();
-          } else if (data.productId && data.apartmentItem && this.mapLoaded) {
-            this.mapPins = [];
-            this.zoom = 16;
+    router.events.subscribe((event: Event) => {
+      if (event instanceof NavigationStart) {
+        if (event.navigationTrigger === 'popstate' && event.url === '/') {
+          this.removeApartmentItem.emit(this.currentApartment);
+        }
+      }
+    });
+  }
 
-            const newPins = [];
-            newPins.push(data?.apartmentItem);
-            this.markerElements = newPins;
-            this.mapPins = parseMapPoints(newPins);
+  ngOnChanges(changes: SimpleChanges) {
+    const mapPoints = changes['mapPoints'];
 
-            this.zoomToMarker();
-            this.cd.detectChanges();
-          }
+    if (
+      mapPoints?.currentValue &&
+      mapPoints?.previousValue !== mapPoints?.currentValue
+    ) {
+      this.subscription.add(
+        this.activatedRotuer.queryParams.subscribe((params: any) => {
+          if (!this.mapService.map) {
+            if (params.propertyID) {
+              const points = this.mapPoints.find(
+                (p: any) =>
+                  p.properties.propertyID.toString() ===
+                  params.propertyID.toString()
+              );
 
-          if (data.productId && data.apartmentItem) {
-            this.mapPins = [];
-            this.zoom = 16;
-            const newPins = [];
-            newPins.push(data?.apartmentItem);
-            this.markerElements = newPins;
-            this.mapPins = parseMapPoints(newPins);
-
-            this.zoomToMarker();
+              this.mapService.map
+                ? this.mapService.flyToMarker(points)
+                : this.buildMap(points?.geocode);
+            } else {
+              this.buildMap();
+            }
           }
         })
-    );
+      );
+    }
   }
 
-  ngAfterViewInit() {
-    this.store
-      .pipe(select(selectors.getApartmentsData()))
-      .subscribe((response) => {
-        if (response?.length > 1) {
-          this.mapPins = parseMapPoints(response);
-          this.markerElements = response;
-
-          this.buildMap();
-          this.cd.detectChanges();
-        }
-      });
-
-    this.getQueryParams();
-  }
-
-  buildMap() {
-    this.map = new maplibre.Map({
-      zoom: this.zoom,
-      center: this.getMapCenterCoordinates(),
+  buildMap(points?: any) {
+    this.mapService.map = new maplibre.Map({
+      zoom: points ? 16 : 9,
+      center: points
+        ? [points.Longitude, points.Latitude]
+        : this.getMapCenterCoordinates(this.mapPoints),
       scrollZoom: true,
       container: this.mapContainer.nativeElement,
       style: `${MAPTILER_MAP_STYLE}?key=${MAPTILER_API_KEY}`,
       interactive: true,
     });
 
-    this.map.addControl(new maplibre.NavigationControl(), 'top-right');
-    this.map.on('load', (map) => {
-      const markersPins: any = parseMapPoints(this.mapPins);
-
-      this.addSource(markersPins);
-
-      this.source = this.map?.getSource(MAP_LAYERS.id);
-
+    this.mapService.map.addControl(
+      new maplibre.NavigationControl(),
+      'top-right'
+    );
+    this.mapService.map.on('load', (map) => {
+      this.addSource(this.mapPoints);
       this.addLayers();
 
       this.loadMapWithMarkers();
-
-      this.mapLoaded = true;
     });
   }
 
   addSource(markersPins: any) {
-    this.map?.addSource(MAP_LAYERS.id, {
+    this.mapService.map.addSource(MAP_LAYERS.id, {
       type: 'geojson',
       data: {
         type: 'FeatureCollection',
@@ -167,67 +142,15 @@ export class MapComponent implements AfterViewInit {
   }
 
   addLayers() {
-    this.map?.addLayer(MAP_LAYERS);
-  }
-
-  convertMapPinsToMarkers(mapPins: any[]) {
-    return this.mapService.convertPinsToMarker(mapPins);
+    this.mapService.map?.addLayer(MAP_LAYERS);
   }
 
   loadMapWithMarkers() {
-    this.markerElements.forEach((marker: any) => {
-      let markerElt: any = document.createElement('div');
-      markerElt = this.mapService.createMapLayerOnMap(marker, markerElt);
-
-      const markerElement = this.mapService.createCustomMarkerAndPopup(
-        markerElt,
-        marker,
-        this.map
-      );
-
-      markerElement.getElement().addEventListener('click', (event: any) => {
-        this.mapService.markerClicked(
-          event,
-          this.map,
-          markerElement,
-          this.router
-        );
-      });
-
-      if (this.mapPins.length == 1) {
-        if (this.activeQuery?.propertyId == marker.propertyID) {
-          markerElt.style.backgroundImage = marker?.favorite
-            ? 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-blue-heart.svg)'
-            : 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-blue.svg)';
-        }
-      }
-    });
-
-    this.map.flyTo({
-      center: this.getMapCenterCoordinates(),
-      essential: true,
-      zoom: 9,
-    });
+    this.mapService.loadMapWithMarkers(this.markerElements, this.router);
   }
 
-  getMapCenterCoordinates() {
-    return this.mapService.getMapCenter(this.mapPins);
-  }
-
-  zoomToMarker() {
-    this.mapService.zoomIntoSelectedMarker(
-      this.mapPins,
-      this.markerElements,
-      this.map
-    );
-  }
-
-  getQueryParams() {
-    this.subscription.add(
-      this.activatedRoute.queryParams.subscribe((params) => {
-        this.activeQuery = { ...params };
-      })
-    );
+  getMapCenterCoordinates(mapPoints: any) {
+    return this.mapService.getMapCenter(mapPoints);
   }
 
   closeSidenav() {

@@ -1,48 +1,44 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from '@angular/core';
+import { IApartmentList } from '@smart/shared/interfaces/apartment-list.interface';
+import { ApartmentItem } from '@smart/shared/models/apartment-item.model';
 
 @Component({
   selector: 'smart-sidenav',
   templateUrl: './sidenav.component.html',
   styleUrls: ['./sidenav.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SidenavComponent implements OnInit, OnDestroy {
-  subscription: Subscription = new Subscription();
-  activeQuery: any;
+export class SidenavComponent {
+  @Input() apartmentList: IApartmentList;
+  @Input() apartmentItemList: ApartmentItem;
+  @Input() loader: boolean | any;
+  @Input() priceRange: ApartmentItem[];
 
-  constructor(private activatedRoute: ActivatedRoute) {}
+  @Output() removeApartmentItem: EventEmitter<any> = new EventEmitter<any>();
+  @Output() selectMarker: EventEmitter<any> = new EventEmitter<any>();
+  @Output() openSidenavClick: EventEmitter<any> = new EventEmitter<any>();
 
-  
-  ngOnInit(): void {
-    this.getQueryParams();
+  onSelectMarker(event: {
+    propertyID: number;
+    apartmentItems: ApartmentItem[];
+  }) {
+    this.selectMarker.emit({
+      propertyID: event.propertyID,
+      apartmentItems: event.apartmentItems,
+    });
   }
 
-  /**
-   * GET QUERY PARAMS
-   */
-  getQueryParams() {
-    this.subscription.add(
-      this.activatedRoute.queryParams.subscribe((params) => {
-        this.activeQuery = { ...params };
-        console.log(this.activeQuery);
-
-      })
-    );
+  onRemoveApartmentItem(markers: any) {
+    this.removeApartmentItem.emit(markers);
   }
 
-  /**
-   * TOGGLE SIDENAV BASED UPON EVENT
-   * @param event OUTPUT EVENT
-   * @param sidenav SIDENAV
-   */
-  toggleSidenav(event: any, sidenav: any) {
-    if (event) {
-      sidenav.toggle();
-    }
-  }
-
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+  onOpenSidenavClick(event: any) {
+    this.openSidenavClick.emit(event);
   }
 }

@@ -1,1 +1,28 @@
-<smart-sidenav></smart-sidenav>
+<div class="sidenav">
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav id="sidenavContainer" #sidenav mode="side" [opened]="true">
+      <smart-sidenav
+        [loader]="loader$ | async"
+        [priceRange]="priceRange$ | async"
+        [apartmentList]="apartmentList$ | async"
+        [apartmentItemList]="apartmentItemList$ | async"
+        (selectMarker)="onSelectMarker($event)"
+        (removeApartmentItem)="onRemoveApartmentItem($event)"
+        (openSidenavClick)="toggleSidenav($event, sidenav)"
+      ></smart-sidenav>
+    </mat-sidenav>
+    <mat-sidenav-content class="sidenav-content">
+      <div class="sidenav-content__wrapper">
+        <!-- MAP -->
+        <smart-map
+          [sidenavState]="sidenav"
+          [mapPoints]="mapPoints$ | async"
+          [markerElements]="markerElements$ | async"
+          [currentApartment]="apartmentItemList$ | async"
+          (openSidenavClick)="toggleSidenav($event, sidenav)"
+          (removeApartmentItem)="onRemoveApartmentItem($event)"
+        ></smart-map>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

@@ -1,4 +1,5 @@
 import { Action, createReducer, on } from '@ngrx/store';
+import { parseMapPoints } from '@smart/shared/helpers/utils';
 import * as apartmentActions from './apartment.actions';
 import { ApartmentState, initialState } from './apartment.state';
 
@@ -8,16 +9,23 @@ const featureReducer = createReducer(
   on(apartmentActions.loadApartmentList, (state: ApartmentState) => ({
     ...state,
     apartmentLoader: true,
+    mapPoints: null,
     error: null,
   })),
   on(apartmentActions.loadApartmentListSuccess, (state, { apartmentList }) => {
-    return { ...state, apartmentList, apartmentLoader: false };
+    return {
+      ...state,
+      apartmentList,
+      mapPoints: parseMapPoints(apartmentList.records),
+      apartmentLoader: false,
+    };
   }),
   on(apartmentActions.loadApartmentListError, (state, { error }) => {
     return {
       ...state,
       apartmentList: null,
       apartmentLoader: false,
+      mapPoints: null,
       error,
     };
   }),
@@ -26,16 +34,14 @@ const featureReducer = createReducer(
     ...state,
     apartmentLoader: true,
     apartmentItem: null,
-    productId: -1,
+    propertyID: -1,
     error: null,
   })),
   on(apartmentActions.loadApartmentItemSuccess, (state, { apartmentItem }) => {
-    console.log(apartmentItem);
-
     return {
       ...state,
       apartmentItem,
-      productId: apartmentItem.propertyID,
+      propertyID: apartmentItem.propertyID,
       apartmentLoader: false,
     };
   }),
@@ -44,7 +50,7 @@ const featureReducer = createReducer(
       ...state,
       apartmentItem: null,
       apartmentLoader: false,
-      productId: -1,
+      propertyID: -1,
       error,
     };
   }),
@@ -53,7 +59,7 @@ const featureReducer = createReducer(
     ...state,
     error: null,
     apartmentItem: null,
-    productId: -1,
+    propertyID: -1,
   }))
 );
 

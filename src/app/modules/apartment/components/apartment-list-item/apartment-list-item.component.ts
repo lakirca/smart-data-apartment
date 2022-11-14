@@ -1,110 +1,85 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import * as selectors from '@smart/modules/apartment/state/apartment.selectors';
-import { CommonService } from '@smart/shared/services/common.service';
-import { select, Store } from '@ngrx/store';
-import { ToastrService } from 'ngx-toastr';
-import { Observable, Subscription } from 'rxjs';
-import { ApartmentState } from '../../state/apartment.state';
 import {
-  loadApartmentItem,
-  removeApartmentItem,
-} from '../../state/apartment.actions';
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from '@angular/core';
+
+import { ToastrService } from 'ngx-toastr';
+import { CommonService } from '@smart/shared/services/common.service';
+
+import { ApartmentItem } from '@smart/shared/models/apartment-item.model';
 
 @Component({
   selector: 'smart-apartment-list-item',
   templateUrl: './apartment-list-item.component.html',
   styleUrls: ['./apartment-list-item.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ApartmentListItemComponent implements OnInit, OnDestroy {
-  apartmentItemList$: Observable<any> | undefined;
-  subscription: Subscription = new Subscription();
-  activeQuery: any;
+export class ApartmentListItemComponent {
+  @Input() apartmentItemList: ApartmentItem;
+  @Output() removeApartmentItem: EventEmitter<any> = new EventEmitter<any>();
+
   showGallery: boolean = false;
-  changeColor: boolean = false;
-  favoritesList: Array<any> = [];
+  favoritesList: ApartmentItem[];
 
   constructor(
-    private store: Store<ApartmentState>,
-    private activatedRoute: ActivatedRoute,
     private commonService: CommonService,
-    private toastr: ToastrService,
-    private router: Router
-  ) {}
-
-  ngOnInit(): void {
-    this.subscription.add(
-      this.activatedRoute.queryParams.subscribe((params: any) => {
-        this.activeQuery = { ...params };
-
-        if (params?.propertyId) {
-          this.store.dispatch(
-            loadApartmentItem({ productId: +params?.propertyId })
-          );
-        }
-      })
-    );
-
-    this.apartmentItemList$ = this.store.pipe(
-      select(selectors.getApartmentItemList())
-    );
-
-    this.getFavorites();
+    private toastr: ToastrService
+  ) {
+    this.favoritesList = this.commonService.getFavourities();
   }
 
-  /**
-   * TOGGLE GALLERY
-   */
   toggleGallery() {
     this.showGallery = !this.showGallery;
   }
 
-  /**
-   * PREVIOUS ( GO BACK )
-   */
-  goBack() {
-    this.store.dispatch(removeApartmentItem());
-
-    this.router.navigate(['/']);
+  goBack(markers: ApartmentItem) {
+    this.removeApartmentItem.emit(markers);
   }
 
-  /**
-   * TOGGLE FAVORITES
-   * @param apartmentItem
-   */
-  toggleFavorite(apartmentItem: any, isFavorites?: boolean) {
-    // 1) IF FAVORITES, THEN UPON TOGGLE REMOVE FAVORITES
+  getFavorite(apartmentItem: ApartmentItem): boolean {
+    let favorite = false;
+    this.favoritesList?.forEach((item) => {
+      if (item.propertyID == apartmentItem.propertyID) {
+        favorite = true;
+      }
+    });
+
+    return favorite;
+  }
+
+  toggleFavorite(apartmentItem: ApartmentItem, isFavorites?: boolean) {
     if (isFavorites) {
       this.removeFavorites(apartmentItem);
+      this.changeIcon(apartmentItem, false);
     } else {
-      // 2) ELSE ADD FAVORITES
-      this.changeColor = !this.changeColor;
       const item = { ...apartmentItem };
       item.favorite = true;
       this.commonService.saveFavoritesToLocalStorage(item);
       this.toastr.success(`${apartmentItem.name} is added as favorite`);
+      this.changeIcon(apartmentItem, true);
     }
+    this.favoritesList = this.commonService.getFavourities();
   }
 
-  /**
-   * REMOVE FAVORITES
-   */
-  removeFavorites(apartmentItem: any) {
-    this.commonService.removeFavoritesItemById(this.activeQuery?.propertyId);
-    this.toastr.error(`${apartmentItem.name} is removed from favorites`);
-    this.getFavorites();
-  }
-
-  /**
-   * GET FAVORITES
-   */
-  getFavorites() {
-    this.favoritesList = this.commonService.getFavoritesListById(
-      this.activeQuery?.propertyId
+  changeIcon(apartmentItem: ApartmentItem, favorited: boolean) {
+    const markers: any[] = Array.from(
+      document.getElementsByClassName('marker') as HTMLCollectionOf<HTMLElement>
     );
+
+    const selectedMarker: any = markers.find(
+      (marker) => marker.id.toString() === apartmentItem.propertyID.toString()
+    );
+
+    selectedMarker.style.backgroundImage = favorited
+      ? 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-red-heart.svg)'
+      : 'url(https://my.smartapartmentdata.com/assets/images/pin/pin-red.svg)';
   }
 
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
+  removeFavorites(apartmentItem: ApartmentItem) {
+    this.commonService.removeFavoritesItemById(apartmentItem.propertyID);
+    this.toastr.error(`${apartmentItem.name} is removed from favorites`);
   }
 }

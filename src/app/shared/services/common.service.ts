@@ -31,7 +31,7 @@ export class CommonService {
   }
 
   /**
-   * REMOVE DUPLICATE BY FILTERING FAVORITES DATA BASED UPON PROPERTYID
+   * REMOVE DUPLICATE BY FILTERING FAVORITES DATA BASED UPON propertyID
    * @param list
    * @returns
    */
@@ -46,27 +46,27 @@ export class CommonService {
   }
 
   /**
-   * GET FAVORITES LIST BY PROPERTYID
-   * @param propertyId
+   * GET FAVORITES LIST BY propertyID
+   * @param propertyID
    * @returns CURRENT FAVORITES ITEM
    */
-  getFavoritesListById(propertyId: any) {
+  getFavoritesListById(propertyID: any) {
     const favoritesList = this.getFavourities();
     const favorites = favoritesList?.filter(
-      (list: any) => list.propertyID == +propertyId
+      (list: any) => list.propertyID == +propertyID
     );
     return favorites;
   }
 
   /**
-   * REMOVE FAVORITES FROM LOCALSTORAGE BASED UPON PROPERTYID
-   * @param propertyId
+   * REMOVE FAVORITES FROM LOCALSTORAGE BASED UPON propertyID
+   * @param propertyID
    */
-  removeFavoritesItemById(propertyId: any) {
+  removeFavoritesItemById(propertyID: any) {
     const favoritesList = this.getFavourities();
     if (favoritesList?.length) {
       const index = favoritesList?.findIndex(
-        (item: any) => item.propertyID == propertyId
+        (item: any) => item.propertyID == propertyID
       );
 
       if (index > -1) {

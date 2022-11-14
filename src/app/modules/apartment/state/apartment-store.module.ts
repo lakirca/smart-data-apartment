@@ -1,9 +1,11 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+
 import { StoreModule } from '@ngrx/store';
-import { reducer } from './apartment.reducer';
-import { ApartmentStoreEffects } from './apartment.effects';
 import { EffectsModule } from '@ngrx/effects';
+
+import { ApartmentStoreEffects } from '@smart/modules/apartment/state/apartment.effects';
+import { reducer } from '@smart/modules/apartment/state/apartment.reducer';
 
 @NgModule({
   declarations: [],

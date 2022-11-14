@@ -1,26 +1,18 @@
-<div class="sidenav">
-  <mat-sidenav-container class="sidenav-container">
-    <mat-sidenav id="sidenavContainer" #sidenav mode="side" [opened]="true">
-      <!-- APARTMENT LIST ITEM -->
-      <smart-apartment-list-item
-        *ngIf="activeQuery?.item == 'apartmentItem'; else apartmentList"
-      ></smart-apartment-list-item>
+<!-- APARTMENT LIST -->
+<smart-apartment-list
+  *ngIf="!apartmentItemList; else list"
+  [apartmentList]="apartmentList"
+  [loader]="loader"
+  [apartmentItemList]="apartmentItemList"
+  [priceRange]="priceRange"
+  (selectMarker)="onSelectMarker($event)"
+  (openSidenavClick)="onOpenSidenavClick($event)"
+></smart-apartment-list>
 
-      <!-- APRTMENT LIST -->
-      <ng-template #apartmentList>
-        <smart-apartment-list
-          (openSidenavClick)="toggleSidenav($event, sidenav)"
-        ></smart-apartment-list>
-      </ng-template>
-    </mat-sidenav>
-    <mat-sidenav-content class="sidenav-content">
-      <div class="sidenav-content__wrapper">
-        <!-- MAP -->
-        <smart-map
-          [sidenavState]="sidenav"
-          (openSidenavClick)="toggleSidenav($event, sidenav)"
-        ></smart-map>
-      </div>
-    </mat-sidenav-content>
-  </mat-sidenav-container>
-</div>
+<!-- APRTMENT LIST ITEM -->
+<ng-template #list>
+  <smart-apartment-list-item
+    [apartmentItemList]="apartmentItemList"
+    (removeApartmentItem)="onRemoveApartmentItem($event)"
+  ></smart-apartment-list-item>
+</ng-template>

@@ -30,7 +30,6 @@ import { SharedModule } from '@smart/shared/shared.module';
     ApartmentRoutingModule,
     ApartmentStoreModule,
     SharedModule,
-
   ],
 })
 export class ApartmentModule {}

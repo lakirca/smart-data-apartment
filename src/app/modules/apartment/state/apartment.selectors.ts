@@ -1,6 +1,8 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { ApartmentState } from './apartment.state';
-import { IApartmentItem } from './interfaces/apartment-item.interface';
+
+import { ApartmentState } from '@smart/modules/apartment/state/apartment.state';
+
+import { ApartmentItem } from '@smart/shared/models/apartment-item.model';
 
 export const selectApartmentState = createFeatureSelector<ApartmentState>(
   'apartment'
@@ -24,6 +26,18 @@ export const getApartmentItemList = () =>
     (state: ApartmentState) => state.apartmentItem
   );
 
+export const getMapPoints = () =>
+  createSelector(
+    selectApartmentState,
+    (state: ApartmentState) => state.mapPoints
+  );
+
+export const getMarkerElements = () =>
+  createSelector(
+    selectApartmentState,
+    (state: ApartmentState) => state.apartmentList?.records
+  );
+
 export const getApartmentRange = () =>
   createSelector(selectApartmentState, (items: ApartmentState) => {
     {
@@ -35,7 +49,7 @@ export const getApartmentRange = () =>
         const apartmentItems = items.apartmentList?.records;
 
         let rangeList: any = [];
-        rangeList = apartmentItems.map((record: IApartmentItem) => {
+        rangeList = apartmentItems.map((record: ApartmentItem) => {
           const propertyID = record.propertyID;
           let updatedData: any[] = [];
           record.floorplans.forEach((plan: any) => {

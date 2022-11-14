@@ -4,10 +4,7 @@
 
 export const environment = {
   production: false,
-  mapbox: {
-    accessToken:
-      'pk.eyJ1IjoiYWtoaWwtYWJoaW5hdiIsImEiOiJja3k1dzYzbHAwcTF0Mm9wdmd5ZTBrdzliIn0.WepCAh-vcHz9KlZcF1tB7g',
-  },
+  apiUrl: "https://app.smartapartmentdata.com/"
 };
 
 /*
